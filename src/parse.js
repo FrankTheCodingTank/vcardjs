@@ -1,14 +1,7 @@
 /**
  * vCard parser — handles 3.0 and 4.0 formats.
  *
- * BUG (#1): TEL property parsing uses a naive split that drops
- * the TYPE parameter. "TEL;TYPE=cell:+14165550137" should produce
- * { type: 'cell', number: '+14165550137' } but currently produces
- * { type: null, number: '+14165550137' }.
- *
- * BUG (#1): BDAY parser only handles "YYYY-MM-DD" format but
- * vCard 4.0 also allows compact "YYYYMMDD". Cards with compact
- * birthdays return null.
+ * Supports TEL TYPE parameters and both extended and compact BDAY dates.
  */
 
 /**
@@ -36,10 +29,8 @@ export function parseVCard(vcf) {
     if (propUpper === 'FN') {
       contact.fullName = value;
     } else if (propUpper.startsWith('TEL')) {
-      // BUG: TYPE parameter is dropped
-      // "TEL;TYPE=cell" → we only check for "TEL", ignoring everything after ";"
       contact.phones.push({
-        type: null,  // BUG: should extract TYPE from prop
+        type: extractType(prop),
         number: value,
       });
     } else if (propUpper === 'BDAY') {
@@ -87,12 +78,11 @@ function splitProperty(line) {
 /**
  * Parse a BDAY value.
  *
- * BUG: only handles "YYYY-MM-DD", not compact "YYYYMMDD".
+ * Handles both extended "YYYY-MM-DD" and compact "YYYYMMDD" forms.
  */
 function parseBirthday(value) {
-  // Only matches YYYY-MM-DD
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return null;  // BUG: compact YYYYMMDD returns null
+  const match = value.match(/^\d{4}-\d{2}-\d{2}$/) || value.match(/^\d{8}$/);
+  if (!match) return null;
   return value;
 }
 
@@ -120,8 +110,6 @@ function parseAddress(value, prop) {
  * e.g. "TEL;TYPE=cell" → "cell"
  *      "ADR;TYPE=home" → "home"
  *
- * NOTE: This function exists and works for ADR but is NOT called
- * for TEL (that's the bug).
  */
 function extractType(prop) {
   const typeMatch = prop.match(/TYPE=([^;:]+)/i);
