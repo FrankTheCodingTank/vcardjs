@@ -18,11 +18,10 @@ const reparsed = parseVCard(generated);
 // Name survives round-trip
 assert.equal(reparsed.fullName, 'Jane Smith');
 
-// Phone number survives but type is lost
+// Phone number and type survive round-trip
 assert.equal(reparsed.phones[0].number, '+14165550137');
-assert.equal(reparsed.phones[0].type, null, 'BUG: type lost on round-trip');
+assert.equal(reparsed.phones[0].type, 'cell');
 
-// BUG: generated vCard has TEL:+14165550137 instead of TEL;TYPE=cell:+14165550137
-assert.ok(!generated.includes('TYPE=cell'), 'BUG: TYPE not emitted in generated vCard');
+assert.ok(generated.includes('TEL;TYPE=cell:+14165550137'));
 
-console.log('Generate tests passed (known bug: phone type lost on round-trip)');
+console.log('Generate tests passed');
