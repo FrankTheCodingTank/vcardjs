@@ -18,11 +18,51 @@ const reparsed = parseVCard(generated);
 // Name survives round-trip
 assert.equal(reparsed.fullName, 'Jane Smith');
 
-// Phone number survives but type is lost
 assert.equal(reparsed.phones[0].number, '+14165550137');
-assert.equal(reparsed.phones[0].type, null, 'BUG: type lost on round-trip');
+assert.equal(reparsed.phones[0].type, 'cell');
+assert.ok(generated.includes('TEL;TYPE=cell:+14165550137'));
 
-// BUG: generated vCard has TEL:+14165550137 instead of TEL;TYPE=cell:+14165550137
-assert.ok(!generated.includes('TYPE=cell'), 'BUG: TYPE not emitted in generated vCard');
+const roundTripCards = [
+  {
+    name: 'multiple regional phone types',
+    vcf: `BEGIN:VCARD
+VERSION:4.0
+FN:Priya Narayanan
+TEL;TYPE=cell:+91 98765 43210
+TEL;TYPE=work:+44 20 7946 0958
+TEL;TYPE=home:+61 2 9374 4000
+EMAIL:priya.narayanan@example.net
+END:VCARD`,
+  },
+  {
+    name: 'compact birthday',
+    vcf: `BEGIN:VCARD
+VERSION:4.0
+FN:Mateo Alvarez
+TEL;TYPE=cell:+34 600 123 456
+BDAY:19850709
+END:VCARD`,
+  },
+  {
+    name: 'timezone and structured address',
+    vcf: `BEGIN:VCARD
+VERSION:4.0
+FN:Amina Haddad
+TEL;TYPE=work:+971 4 555 0198
+TZ:Asia/Dubai
+ADR;TYPE=work:;;Sheikh Zayed Rd;Dubai;Dubai;00000;United Arab Emirates
+END:VCARD`,
+  },
+];
 
-console.log('Generate tests passed (known bug: phone type lost on round-trip)');
+for (const { name, vcf } of roundTripCards) {
+  const reparsedCard = parseVCard(generateVCard(parseVCard(vcf)));
+  const originalCard = parseVCard(vcf);
+
+  assert.deepEqual(reparsedCard.phones, originalCard.phones, `${name}: phones round-trip`);
+  assert.equal(reparsedCard.birthday, originalCard.birthday, `${name}: birthday round-trip`);
+  assert.equal(reparsedCard.timezone, originalCard.timezone, `${name}: timezone round-trip`);
+  assert.deepEqual(reparsedCard.address, originalCard.address, `${name}: address round-trip`);
+}
+
+console.log('Generate tests passed');
