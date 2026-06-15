@@ -1,0 +1,12 @@
+{
+  "name": "vcardjs",
+  "version": "0.4.1",
+  "description": "Lightweight vCard 3.0/4.0 parser and generator for Node.js",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node tests/parse.test.js && node tests/generate.test.js"
+  },
+  "keywords": ["vcard", "vcf", "contact", "parser", "generator"],
+  "license": "MIT"
+}
