@@ -1,9 +1,7 @@
 /**
  * vCard generator — produces valid 4.0 vCards from contact objects.
  *
- * BUG (#1): generateVCard doesn't emit TYPE on TEL lines because
- * parseVCard drops it (the type field is always null after parsing).
- * Round-trip parse → generate → parse loses phone types.
+ * Emits TEL TYPE parameters when phone objects include them.
  */
 
 /**
@@ -21,7 +19,6 @@ export function generateVCard(contact) {
 
   if (contact.phones) {
     for (const phone of contact.phones) {
-      // BUG: type is null from parser, so TYPE is never emitted
       if (phone.type) {
         lines.push(`TEL;TYPE=${phone.type}:${phone.number}`);
       } else {
